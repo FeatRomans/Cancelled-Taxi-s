@@ -1,0 +1,41 @@
+-- 1. Build up distribution of orders according to reasons for failure: cancellations before and after driver assignment, and reasons for order rejection. Analyse the resulting plot. Which category has the highest number of orders?
+
+SELECT COUNT(order_status_key) AS Count, order_status_key as reason
+ FROM `sound-works-360412.SoRare.Order_Offers` 
+ GROUP BY order_status_key
+ LIMIT 1000
+
+-- How many orders had drivers assigned
+ SELECT COUNT(is_driver_assigned_key) AS is_driver_assigned_key_count, is_driver_assigned_key
+ FROM `sound-works-360412.SoRare.Order_Offers` 
+ GROUP BY is_driver_assigned_key
+ LIMIT 1000
+
+-- 2. Plot the distribution of failed orders by hours. Is there a trend that certain hours have an abnormally high proportion of one category or another? What hours are the biggest fails? How can this be explained?
+SELECT 
+Extract(hour FROM order_datetime) as hour,
+COUNT (CASE WHEN is_driver_assigned_key = 1 THEN 1 END) AS assigned,
+COUNT (CASE WHEN is_driver_assigned_key = 0 THEN 1 END) AS unassigned,
+ FROM `sound-works-360412.SoRare.Order_Offers` 
+ GROUP BY hour
+ order by hour asc
+ LIMIT 1000
+
+-- 3.  Plot the average time to cancellation with and without driver, by the hour. If there are any outliers in the data, it would be better to remove them. Can we draw any conclusions from this plot?
+select
+AVG(cancellations_time_in_seconds), 
+is_driver_assigned_key,
+extract(hour FROM order_datetime) as hour,
+ FROM `sound-works-360412.SoRare.Order_Offers` 
+ WHERE is_driver_assigned_key=1
+GROUP BY is_driver_assigned_key, hour
+ORDER BY hour asc
+
+-- 4. Plot the distribution of average ETA by hours. How can this plot be explained?
+SELECT extract(hour FROM order_datetime) as hour,
+AVG(m_order_eta) as average_eta
+ FROM `sound-works-360412.SoRare.Order_Offers` 
+ WHERE m_order_eta IS NOT NULL
+ GROUP BY hour
+ ORDER BY hour asc
+
